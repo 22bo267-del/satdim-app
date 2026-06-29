@@ -60,7 +60,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
           onPageStarted: (url) => setState(() => _isLoading = true),
           onPageFinished: (url) {
             setState(() => _isLoading = false);
-            // Disable right-click and selection via JS
             _controller.runJavaScript('''
               document.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
@@ -81,15 +80,18 @@ class _WebViewScreenState extends State<WebViewScreen> {
       ..loadRequest(Uri.parse('https://satdim.az'));
   }
 
+  Future<bool> _onWillPop() async {
+    if (await _controller.canGoBack()) {
+      _controller.goBack();
+      return false;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (await _controller.canGoBack()) {
-          _controller.goBack();
-        }
-      },
+    return WillPopScope(
+      onWillPop: _onWillPop,
       child: Scaffold(
         body: SafeArea(
           child: Stack(
